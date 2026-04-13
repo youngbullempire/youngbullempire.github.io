@@ -1,4 +1,12 @@
 name,nick,weight,sports,w,l,d,status,reach,hometown,gym,photo
-John Doe,"The Bull",Heavyweight,"Boxing,MMA",8,1,0,Active,76",Atlanta GA,YBE Training Center,john_doe.png
-Marcus Lee,"Iron Hands",Lightweight,Boxing,5,0,1,Prospect,70",Miami FL,YBE Training Center,marcus_lee.png
-DeShawn Carter,"The Beast",Middleweight,"MMA,Street",12,2,0,Champion,74",Houston TX,YBE Training Center,
+Chris York,Houdini,Heavyweight,"Boxing,MMA,JU Jit Su",0,0,0,Active,"73""","Collinsville, OK",YBE Combat Sports,Chris_york.png
+Jarren Hayes,The Hitman,MiddleWeight,Boxing,0,0,0,Active,"74""","Tulsa, OK",YBE Combat Sports,marcus_lee.png
+Kolton Carder,TBD,Middleweight,"Boxing, MMA",0,0,0,Prospect ,"70""","MT Pleasant, TEX",YBE Combat Sports,
+Adrian ,TBD,Middleweight,"Wrestling, Boxing, MMA",0,0,0,Active,"1""","Tulsa, OK",YBE Combat Sports,
+Xander Mcnac,XANX,Middleweight,"Boxing, MMA",0,0,0,Active,"68""","Tulsa, OK",YBE Combat Sports,
+Jax Broyles,TBD,Middleweight,"Boxing, MMA ",0,0,0,Active,"67""","Wichita, KS",YBE Combat Sports,
+Nicholas Palmer,TBD,Middleweight,"Boxing, MMA, Wrestling",0,0,0,Active,"73""","Collinsville, OK",YBE Combat Sports,
+Carter,Sen,Middleweight,"Wrestling, Boxing, Muay Thai",0,0,0,Active,"67.5""","Tulsa, OK",YBE Combat Sports,
+Wriggly Garrison,TBD,Lightweight,"MMA, Boxing",0,0,0,Active,"72.5""","Tulsa, OK",YBE Combat Sports,
+Jimmy Lightfoot,Mafia,Fetherweight,"Boxing, MMA",0,0,0,Active,"70""","Tulsa, OK",YBE Combat Sports,
+Tae'jhon,Spazzout,Middleweight,Boxing,0,0,0,Active,TBD,"Tulsa, OK",YBE Combat Sports,
