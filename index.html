@@ -1465,7 +1465,9 @@
 
   <div class="fighter-tabs" id="fighter-tabs"></div>
   <div class="video-panels" id="video-panels"></div>
-</section>
+  <div style="text-align:center;margin-top:24px;">
+    <button class="btn btn-outline" style="font-size:10px;letter-spacing:1px;padding:10px 20px;" onclick="exportVideosCSV()">⬇ Export videos.csv</button>
+  </div>
 
 <div class="section-divider"></div>
 
@@ -1481,6 +1483,9 @@
     </div>
   </div>
   <div class="photo-grid" id="photo-grid"></div>
+  <div style="text-align:center;margin-top:20px;">
+    <button class="btn btn-outline" style="font-size:10px;letter-spacing:1px;padding:10px 20px;" onclick="exportPhotosCSV()">⬇ Export photos.csv</button>
+  </div>
 </section>
 
 <!-- Lightbox -->
@@ -1519,8 +1524,9 @@
     <div class="events-panel">
       <div class="events-panel-title">★ Upcoming Events</div>
       <div class="event-list" id="event-list"></div>
-      <div style="margin-top:16px;">
-        <button class="btn btn-gold" style="width:100%;" onclick="openAddEvent()">+ Add Event</button>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="btn btn-gold" style="flex:1;" onclick="openAddEvent()">+ Add Event</button>
+        <button class="btn btn-outline" style="flex:0;padding:12px 14px;font-size:10px;letter-spacing:1px;" onclick="exportEventsCSV()" title="Download events.csv">⬇ CSV</button>
       </div>
     </div>
   </div>
@@ -1601,6 +1607,8 @@
     <input type="text" id="v-url" placeholder="https://www.youtube.com/watch?v=...">
     <label>Date</label>
     <input type="text" id="v-date" placeholder="Dec 2024">
+    <label>Tags (optional, comma-separated)</label>
+    <input type="text" id="v-tags" placeholder="sparring, highlights, ko">
     <div class="modal-btn-row">
       <button class="btn btn-gold" onclick="addVideo()" style="flex:1">Add Video</button>
       <button class="btn btn-outline" onclick="closeModal('video-modal')" style="flex:0;padding:12px 18px">Cancel</button>
@@ -1686,6 +1694,8 @@
     <div class="modal-title">Add Caption</div>
     <label>Caption (optional)</label>
     <input type="text" id="pc-caption" placeholder="Fight night · Dec 2025">
+    <label>Tags (optional, comma-separated)</label>
+    <input type="text" id="pc-tags" placeholder="training, event, team">
     <div class="modal-btn-row">
       <button class="btn btn-gold" onclick="confirmPhotoCaption()" style="flex:1">Save Photo</button>
       <button class="btn btn-outline" onclick="closeModal('photo-caption-modal')" style="flex:0;padding:12px 18px">Skip</button>
@@ -2065,6 +2075,7 @@ function renderPanels() {
           <div class="video-info">
             <div class="video-title">${v.title || 'Untitled clip'}</div>
             <div class="video-meta">${v.date || 'Date TBD'}</div>
+            ${v.tags && v.tags.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${v.tags.map(t => `<span style="font-family:'Oswald',sans-serif;font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 7px;border:1px solid var(--gold-dark);color:var(--gold-dark);">${t}</span>`).join('')}</div>` : ''}
           </div>
         </div>`;
     }).join('');
@@ -2140,15 +2151,18 @@ function addVideo() {
   const title = document.getElementById('v-title').value.trim();
   const url = document.getElementById('v-url').value.trim();
   const date = document.getElementById('v-date').value.trim();
+  const tagsRaw = document.getElementById('v-tags').value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
   if (!title) { alert('Please enter a video title.'); return; }
   if (!videos[fighterId]) videos[fighterId] = [];
-  videos[fighterId].push({ title, url, date });
+  videos[fighterId].push({ title, url, date, tags });
   activeTab = fighterId;
   closeModal('video-modal');
   render();
   document.getElementById('v-title').value = '';
   document.getElementById('v-url').value = '';
   document.getElementById('v-date').value = '';
+  document.getElementById('v-tags').value = '';
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -2171,6 +2185,7 @@ function renderPhotos() {
       <img src="${p.src}" alt="${p.caption || ''}">
       <div class="photo-item-overlay">
         <span class="photo-caption">${p.caption || ''}</span>
+        ${p.tags && p.tags.length ? `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;">${p.tags.map(t => `<span style="font-family:'Oswald',sans-serif;font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:1px 5px;background:rgba(0,0,0,0.7);border:1px solid var(--gold-dark);color:var(--gold-dark);">${t}</span>`).join('')}</div>` : ''}
         <button class="photo-delete-btn" onclick="event.stopPropagation();deletePhoto(${i})" title="Delete">✕</button>
       </div>
     </div>
@@ -2218,8 +2233,12 @@ function triggerPhotoUpload() {
 function confirmPhotoCaption() {
   if (!pendingPhotoData) return;
   const caption = document.getElementById('pc-caption').value.trim();
-  photos.push({ src: pendingPhotoData.src, caption });
+  const tagsRaw = document.getElementById('pc-tags').value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+  photos.push({ src: pendingPhotoData.src, caption, tags });
   closeModal('photo-caption-modal');
+  document.getElementById('pc-caption').value = '';
+  document.getElementById('pc-tags').value = '';
   // Process remaining files without captions
   const remaining = pendingPhotoData.remaining || [];
   pendingPhotoData = null;
@@ -2228,7 +2247,7 @@ function confirmPhotoCaption() {
   remaining.forEach(file => {
     const reader = new FileReader();
     reader.onload = (ev) => {
-      photos.push({ src: ev.target.result, caption: '' });
+      photos.push({ src: ev.target.result, caption: '', tags: [] });
       done++;
       if (done === remaining.length) renderPhotos();
     };
@@ -2356,8 +2375,164 @@ function renderEventList() {
   }).join('');
 }
 
+// ===================== CSV LOADERS =====================
+
+/*
+ * ── events.csv format ──
+ * date,title,location,notes
+ * 2025-08-15,Fight Night Vol 3,BOK Center Tulsa OK,Doors open at 6pm
+ * 2025-09-20,YBE Amateur Showcase,Convention Center,Free admission
+ *
+ * ── videos.csv format ──
+ * fighter,title,url,date,tags
+ * Chris York,Sparring Highlights,https://youtu.be/XXXX,2025-07-01,"sparring,highlights"
+ * Jarren Hayes,Fight Night KO,https://youtu.be/YYYY,2025-06-15,"ko,fight night"
+ *
+ * ── photos.csv format ──
+ * src,caption,tags
+ * images/camp_photo1.jpg,Training Camp 2025,"training,camp"
+ * images/fight_night.jpg,Fight Night Vol 2,"event,fight night"
+ * https://i.imgur.com/abc123.jpg,Team Photo 2025,"team"
+ */
+
+async function loadEvents() {
+  try {
+    const res = await fetch('events.csv');
+    if (!res.ok) return;
+    const text = await res.text();
+    const rows = parseCSVGeneric(text);
+    rows.forEach(row => {
+      if (!row.date || !row.title) return;
+      // avoid duplicates from re-loads
+      const alreadyExists = calEvents.some(e => e.title === row.title && e.date === row.date);
+      if (!alreadyExists) {
+        calEvents.push({ title: row.title, date: row.date, location: row.location || '', notes: row.notes || '', id: Date.now() + Math.random() });
+      }
+    });
+    calEvents.sort((a, b) => a.date.localeCompare(b.date));
+    renderCal();
+  } catch(e) { console.warn('events.csv not found or invalid', e); }
+}
+
+async function loadVideosCSV() {
+  try {
+    const res = await fetch('videos.csv');
+    if (!res.ok) return;
+    const text = await res.text();
+    const rows = parseCSVGeneric(text);
+    rows.forEach(row => {
+      if (!row.fighter || !row.url) return;
+      // Find matching fighter by name (case-insensitive)
+      const f = fighters.find(x => x.name.toLowerCase().trim() === row.fighter.toLowerCase().trim());
+      if (!f) return;
+      if (!videos[f.id]) videos[f.id] = [];
+      const tags = row.tags ? row.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+      // avoid duplicates
+      const exists = videos[f.id].some(v => v.url === row.url);
+      if (!exists) {
+        videos[f.id].push({ title: row.title || 'Video', url: row.url, date: row.date || '', tags });
+      }
+    });
+    renderTabs();
+    renderPanels();
+  } catch(e) { console.warn('videos.csv not found or invalid', e); }
+}
+
+async function loadPhotosCSV() {
+  try {
+    const res = await fetch('photos.csv');
+    if (!res.ok) return;
+    const text = await res.text();
+    const rows = parseCSVGeneric(text);
+    rows.forEach(row => {
+      if (!row.src) return;
+      const tags = row.tags ? row.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+      const exists = photos.some(p => p.src === row.src);
+      if (!exists) {
+        photos.push({ src: row.src, caption: row.caption || '', tags, fromCSV: true });
+      }
+    });
+    renderPhotos();
+  } catch(e) { console.warn('photos.csv not found or invalid', e); }
+}
+
+// Generic CSV parser (handles quoted fields with commas)
+function parseCSVGeneric(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return [];
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+  const results = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = parseCSVLine(lines[i]);
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (vals[idx] || '').trim(); });
+    results.push(obj);
+  }
+  return results;
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let inQuote = false;
+  let cur = '';
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQuote = !inQuote; }
+    else if (c === ',' && !inQuote) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+// ===================== CSV EXPORT =====================
+
+function csvEscape(val) {
+  const s = String(val === null || val === undefined ? '' : val);
+  return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function downloadCSV(filename, rows, headers) {
+  const lines = [headers.join(',')];
+  rows.forEach(r => lines.push(headers.map(h => csvEscape(r[h] ?? '')).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportEventsCSV() {
+  if (!calEvents.length) { alert('No events to export.'); return; }
+  downloadCSV('events.csv', calEvents.map(e => ({ date: e.date, title: e.title, location: e.location || '', notes: e.notes || '' })), ['date','title','location','notes']);
+}
+
+function exportVideosCSV() {
+  const rows = [];
+  fighters.forEach(f => {
+    (videos[f.id] || []).forEach(v => {
+      rows.push({ fighter: f.name, title: v.title || '', url: v.url || '', date: v.date || '', tags: (v.tags || []).join(', ') });
+    });
+  });
+  if (!rows.length) { alert('No videos to export.'); return; }
+  downloadCSV('videos.csv', rows, ['fighter','title','url','date','tags']);
+}
+
+function exportPhotosCSV() {
+  const exportable = photos.filter(p => p.fromCSV || p.src.startsWith('http') || p.src.startsWith('images/'));
+  if (!exportable.length) { alert('No CSV-compatible photos to export.\n\nNote: locally uploaded (base64) photos cannot be exported to CSV — only photos loaded from a URL or images/ path are included.'); return; }
+  downloadCSV('photos.csv', exportable.map(p => ({ src: p.src, caption: p.caption || '', tags: (p.tags || []).join(', ') })), ['src','caption','tags']);
+}
+
 // ── Entry point: load CSV then render everything ──
-loadFighters();
+async function init() {
+  await loadFighters();
+  // Load supplemental CSVs in parallel after fighters are ready
+  await Promise.all([loadEvents(), loadVideosCSV(), loadPhotosCSV()]);
+}
+
+init();
 </script>
 </body>
 </html>
